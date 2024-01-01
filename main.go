@@ -9,24 +9,24 @@ import (
 	"time"
 )
 
-func addBackendHandler(w http.ResponseWriter, r *http.Request) {
+func registerServerHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	var backendRequest AddBackendRequest
+	var backendRequest RegisterBackendRequest
 	if err := json.Unmarshal(body, &backendRequest); err != nil {
 		fmt.Println("Invalid request")
 		return
 	}
-	AddBackend(backendRequest)
+	RegisterServer(backendRequest)
 }
 
-func removeBackendHandler(w http.ResponseWriter, r *http.Request) {
+func deRegisterServerHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	var removeBackendRequest RemoveBackendRequest
+	var removeBackendRequest DeRegisterBackendRequest
 	if err := json.Unmarshal(body, &removeBackendRequest); err != nil {
 		fmt.Println("Invalid request")
 		return
 	}
-	RemoveBackend(removeBackendRequest)
+	DeRegisterServer(removeBackendRequest)
 }
 
 func forwardingHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,8 +53,8 @@ func forwardingHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", forwardingHandler)
-	http.HandleFunc("/add-backend", addBackendHandler)
-	http.HandleFunc("/remove-backend", removeBackendHandler)
+	http.HandleFunc("/add-backend", registerServerHandler)
+	http.HandleFunc("/remove-backend", deRegisterServerHandler)
 
 	port := flag.Int("PORT", 8080, "Port to start service on")
 	url := fmt.Sprintf("localhost:%d", *port)

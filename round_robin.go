@@ -7,7 +7,7 @@ import (
 var lastServedBackend *Server
 
 func RoundRobinExecution() *Server {
-	backends := FetchBackend()
+	backends := FetchServers()
 	if len(backends) == 0 {
 		fmt.Println("No available backend")
 	}

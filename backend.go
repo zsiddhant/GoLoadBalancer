@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-var availableBackends = make([]*Server, 0)
+var availableServers = make([]*Server, 0)
 
-type AddBackendRequest struct {
+type RegisterBackendRequest struct {
 	Name string
 	Host string
 	Port int
 }
 
-type RemoveBackendRequest struct {
+type DeRegisterBackendRequest struct {
 	Name string
 }
 
@@ -27,43 +27,43 @@ type Server struct {
 	Next  *Server
 }
 
-func AddBackend(request AddBackendRequest) {
+func RegisterServer(request RegisterBackendRequest) {
 	name := request.Name
 	host := request.Host
 	port := request.Port
 
 	backend := Server{Host: host, Name: name, Port: port, Alive: true}
-	if len(availableBackends) > 0 {
-		temp := availableBackends[len(availableBackends)-1]
+	if len(availableServers) > 0 {
+		temp := availableServers[len(availableServers)-1]
 		temp.Next = &backend
 	}
-	availableBackends = append(availableBackends, &backend)
+	availableServers = append(availableServers, &backend)
 	go HealthCheckBackend(&backend)
 }
 
-func RemoveBackend(request RemoveBackendRequest) {
+func DeRegisterServer(request DeRegisterBackendRequest) {
 	name := request.Name
 
-	if len(availableBackends) == 0 {
+	if len(availableServers) == 0 {
 		Print("No servers available to remove")
 		return
 	}
 
 	var indexToRemove int
-	for i, server := range availableBackends {
+	for i, server := range availableServers {
 		if server.Name == name {
 			indexToRemove = i
 		}
 	}
 
 	if indexToRemove != 0 {
-		if len(availableBackends) == indexToRemove+1 {
-			availableBackends[indexToRemove-1].Next = nil
+		if len(availableServers) == indexToRemove+1 {
+			availableServers[indexToRemove-1].Next = nil
 		} else {
-			availableBackends[indexToRemove-1].Next = availableBackends[indexToRemove+1].Next
+			availableServers[indexToRemove-1].Next = availableServers[indexToRemove+1].Next
 		}
 	}
-	availableBackends = append(availableBackends[:indexToRemove], availableBackends[indexToRemove+1:]...)
+	availableServers = append(availableServers[:indexToRemove], availableServers[indexToRemove+1:]...)
 }
 
 func HealthCheckBackend(backend *Server) {
@@ -73,7 +73,7 @@ func HealthCheckBackend(backend *Server) {
 		if err != nil || response.StatusCode != 200 {
 			backend.mu.Lock()
 			backend.Alive = false
-			RemoveBackend(RemoveBackendRequest{Name: backend.Name})
+			DeRegisterServer(DeRegisterBackendRequest{Name: backend.Name})
 			backend.mu.Unlock()
 			return
 		}
@@ -81,6 +81,6 @@ func HealthCheckBackend(backend *Server) {
 	}
 }
 
-func FetchBackend() []*Server {
-	return availableBackends
+func FetchServers() []*Server {
+	return availableServers
 }
